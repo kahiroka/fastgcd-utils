@@ -9,8 +9,11 @@ from binascii import a2b_base64
 import pgp5parser
 
 def print_rsa_pubkey_n(pem):
-	publicKey = RSA.importKey(pem)
-	print(hex(publicKey.n)[2:])
+	try:
+		publicKey = RSA.importKey(pem)
+		print(hex(publicKey.n)[2:])
+	except ValueError:
+		print('Not RSA Key', file=sys.stderr)
 
 def print_cert_pubkey_n(pem):
 	# rfc5280
@@ -19,9 +22,25 @@ def print_cert_pubkey_n(pem):
 	cert = DerSequence()
 	cert.decode(der)
 	tbsCertificate = DerSequence()
-	tbsCertificate.decode(cert[0])
-	subjectPublicKeyInfo = tbsCertificate[6]
-	print_rsa_pubkey_n(subjectPublicKeyInfo)
+	try:
+		tbsCertificate.decode(cert[0], True)
+	except ValueError:
+		print('ValueError: e.g. negative integer', file = sys.stderr)
+		return
+
+	if (len(tbsCertificate) >= 6):
+		if (type(tbsCertificate[0]) is bytes): # version, serial#, ...
+			subjectPublicKeyInfo = tbsCertificate[6]
+			print_rsa_pubkey_n(subjectPublicKeyInfo)
+		elif (type(tbsCertificate[0]) is int): # serial#, ...
+			subjectPublicKeyInfo = tbsCertificate[5]
+			print_rsa_pubkey_n(subjectPublicKeyInfo)
+		else:
+			print('Unknown Certificate Format', file = sys.stderr)
+			sys.exit()
+	else:
+		print('Illegal Certificate Size', file = sys.stderr)
+		sys.exit()
 
 def print_ssh2_pubkey_n(pem):
 	# rfc4716
@@ -57,7 +76,7 @@ def main():
 	files = glob.glob(keydir+'/*')
 
 	for fn in files:
-		#print(fn)
+		print(fn, file = sys.stderr)
 		f = open(fn)
 		lines = f.readlines()
 		f.close()
