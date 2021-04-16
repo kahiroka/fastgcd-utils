@@ -1,0 +1,13 @@
+diff --git a/install.sh b/install.sh
+index 94edead..c95b48e 100755
+--- a/install.sh
++++ b/install.sh
+@@ -12,7 +12,7 @@ then
+ 
+     if [ ! -f gmp-5.0.5.tar.bz2 ];
+     then
+-        $get ftp://ftp.gmplib.org/pub/gmp-5.0.5/gmp-5.0.5.tar.bz2
++        curl -OL https://ftp.gnu.org/gnu/gmp/gmp-5.0.5.tar.bz2
+     fi
+ 
+     sum=`openssl sha1 gmp-5.0.5.tar.bz2 | awk -F' ' '{print $2}'`
